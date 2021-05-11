@@ -21,86 +21,80 @@ apps:
       LIBGL_ALWAYS_SOFTWARE: 1 # force software rendering for now
 
 parts:
-  ubuntu-desktop-installer:
-    source: .
+  flutter:
     plugin: nil
-    build-environment:
-      - C_INCLUDE_PATH: /snap/flutter/current/usr/include
-      - LD_LIBRARY_PATH: $LD_LIBRARY_PATH:/snap/flutter/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET
-      - PKG_CONFIG_PATH: $PKG_CONFIG_PATH:/snap/flutter/current/usr/lib/$SNAPCRAFT_ARCH_TRIPLET/pkgconfig
-      - XDG_DATA_DIRS: /snap/flutter/current/usr/share:$XDG_DATA_DIRS
+    # clone via override-build to preserve git meta
     override-build: |
       set -eux
-      cd packages/ubuntu_desktop_installer
-      flutter channel dev
-      flutter upgrade
-      flutter config --enable-linux-desktop
-      flutter doctor
-      flutter pub get
-      flutter build linux --release -v
-      mkdir -p $SNAPCRAFT_PART_INSTALL/bin/lib
-      cp -r build/linux/x64/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
-    build-snaps:
-      - flutter/latest/stable
+      snapcraftctl build
+      git clone -b dev https://github.com/flutter/flutter.git
+      flutter/bin/flutter upgrade
+      flutter/bin/flutter config --enable-linux-desktop
+      flutter/bin/flutter doctor -v
+      cp -r flutter $SNAPCRAFT_PART_INSTALL/
+    build-packages:
+      - curl
+      - git
+      - unzip
+      - clang
+      - cmake
+      - ninja-build
+      - pkg-config
+      - libgtk-3-dev
+      - liblzma-dev
+    prime:
+      - -flutter
 
-  libraries:
+  ubuntu-desktop-installer:
+    after: [flutter]
+    source: .
     plugin: nil
+    override-build: |
+      set -eux
+      cd packages/subiquity_client
+      $SNAPCRAFT_STAGE/flutter/bin/flutter pub get
+      cd ../ubuntu_desktop_installer
+      $SNAPCRAFT_STAGE/flutter/bin/flutter pub get
+      $SNAPCRAFT_STAGE/flutter/bin/flutter build linux --release -v
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      cp -r build/linux/x64/release/bundle/* $SNAPCRAFT_PART_INSTALL/bin/
     stage-packages:
+      - libatk-bridge2.0-0
       - libatk1.0-0
+      - libatspi2.0-0
       - libcairo-gobject2
       - libcairo2
-      - libegl-mesa0
-      - libegl1
+      - libdatrie1
+      - libepoxy0
+      - libfontconfig1
+      - libfreetype6
+      - libfribidi0
+      - libgdk-pixbuf2.0-0
+      - libgraphite2-3
       - libgtk-3-0
+      - libharfbuzz0b
       - libpango-1.0-0
       - libpangocairo-1.0-0
+      - libpangoft2-1.0-0
+      - libpixman-1-0
       - libpng16-16
+      - libthai0
+      - libwayland-client0
+      - libwayland-cursor0
       - libwayland-egl1
       - libx11-6
-      - libdatrie1
-      - libdrm2
-      - libgbm1
-      - libglapi-mesa
-      - libgraphite2-3
-      - libxshmfence1
-      - libgl1-mesa-dri
-      - libllvm10
-      - libpciaccess0
-      - libvulkan1
-      - shared-mime-info 
-    prime:
-      - usr/lib/*/libEGL*.so.*
-      - usr/lib/*/libGL*.so.*
-      - usr/lib/*/libX*.so.*
-      - usr/lib/*/liba*.so.*
-      - usr/lib/*/libcairo*.so.*
-      - usr/lib/*/libe*.so.*
-      - usr/lib/*/libf*.so.*
-      - usr/lib/*/libgdk*.so.*
-      - usr/lib/*/libgtk*.so.*
-      - usr/lib/*/libharfbuzz*.so.*
-      - usr/lib/*/libpango*.so.*
-      - usr/lib/*/libpixman*.so.*
-      - usr/lib/*/libpng*.so.*
-      - usr/lib/*/libthai*.so.*
-      - usr/lib/*/libwayland*.so.*
-      - usr/lib/*/libxcb*.so.*
-      - usr/lib/*/libxkb*.so.*
-      - usr/lib/*/libdatrie*.so.*
-      - usr/lib/*/libdrm*.so.*
-      - usr/lib/*/libgbm*.so.*
-      - usr/lib/*/libglapi*.so.*
-      - usr/lib/*/libgraphite2*.so.*
-      - usr/lib/*/libxshmfence*.so.*
-      - usr/lib/*/libLLVM-10.so.*
-      - usr/lib/*/libpciaccess*.so.*
-      - usr/lib/*/libsensors*.so.*
-      - usr/lib/*/libvulkan*.so.*
-      - usr/lib/*/dri
-      - usr/share/glvnd/egl_vendor.d
-      - usr/share/drirc.d
-      - usr/lib/*/gdk-pixbuf-2.0
-      - usr/lib/*/
-      - usr/bin/update-mime-database
-      - usr/bin/gdk*
-      - usr/share/mime
+      - libxau6
+      - libxcb-render0
+      - libxcb-shm0
+      - libxcb1
+      - libxcomposite1
+      - libxcursor1
+      - libxdamage1
+      - libxdmcp6
+      - libxext6
+      - libxfixes3
+      - libxi6
+      - libxinerama1
+      - libxkbcommon0
+      - libxrandr2
+      - libxrender1
